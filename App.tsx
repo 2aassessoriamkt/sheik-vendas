@@ -19,6 +19,7 @@ export default function App() {
 
   const [view, setView] = useState<ViewState>('home');
   const [adminError, setAdminError] = useState('');
+  const [adBeingEdited, setAdBeingEdited] = useState<Ad | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,20 +90,35 @@ export default function App() {
   };
 
   const handleSaveAd = (newAd: Ad) => {
+    const upsertLocal = (ad: Ad) => {
+      setAds((prev) => {
+        const exists = prev.some((p) => p.id === ad.id);
+        if (!exists) return [ad, ...prev];
+        return prev.map((p) => (p.id === ad.id ? ad : p));
+      });
+    };
+
     if (!isSupabaseConfigured || !supabase) {
-      setAds((prev) => [newAd, ...prev]);
+      upsertLocal(newAd);
+      setAdBeingEdited(null);
       return;
     }
 
     void (async () => {
-      const { data, error } = await supabase.from('ads').insert(newAd).select('*').single();
+      const { data, error } = await supabase
+        .from('ads')
+        .upsert(newAd, { onConflict: 'id' })
+        .select('*')
+        .single();
+
       if (error) {
-        console.error('Supabase insert error:', error);
+        console.error('Supabase upsert error:', error);
         alert('Erro ao salvar no banco. Tente novamente.');
         return;
       }
 
-      setAds((prev) => [data as Ad, ...prev]);
+      upsertLocal(data as Ad);
+      setAdBeingEdited(null);
     })();
   };
 
@@ -149,7 +165,14 @@ export default function App() {
   if (view === 'admin-cadastro') {
     return (
       <div className="min-h-screen bg-white text-slate-900">
-        <AdminCadastro onSave={handleSaveAd} onBack={() => setView('admin-dashboard')} />
+        <AdminCadastro
+          onSave={handleSaveAd}
+          onBack={() => {
+            setAdBeingEdited(null);
+            setView('admin-dashboard');
+          }}
+          initialAd={adBeingEdited || undefined}
+        />
       </div>
     );
   }
@@ -161,7 +184,14 @@ export default function App() {
         onDelete={handleDeleteAd}
         onLogout={() => setView('home')}
         onSave={handleSaveAd}
-        onNavigateToCadastro={() => setView('admin-cadastro')}
+        onNavigateToCadastro={() => {
+          setAdBeingEdited(null);
+          setView('admin-cadastro');
+        }}
+        onEdit={(ad) => {
+          setAdBeingEdited(ad);
+          setView('admin-cadastro');
+        }}
       />
     );
   }

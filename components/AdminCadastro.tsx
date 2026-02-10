@@ -7,21 +7,22 @@ import { Ad } from '../types';
 interface AdminCadastroProps {
   onSave: (ad: Ad) => void;
   onBack: () => void;
+  initialAd?: Ad;
 }
 
-export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack }) => {
+export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack, initialAd }) => {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    price: '',
-    category: CATEGORIES[1],
-    location: '',
-    whatsapp: '',
-    description: '',
-    images: [] as string[],
-    videos: [] as string[],
-    featured: false
-  });
+  const [formData, setFormData] = useState(() => ({
+    title: initialAd?.title || '',
+    price: initialAd ? String(initialAd.price) : '',
+    category: initialAd?.category || CATEGORIES[1],
+    location: initialAd?.location || '',
+    whatsapp: initialAd?.whatsapp || '',
+    description: initialAd?.description || '',
+    images: (initialAd?.images || []) as string[],
+    videos: (initialAd?.videos || []) as string[],
+    featured: Boolean(initialAd?.featured)
+  }));
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -118,11 +119,16 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack }) 
     
     onSave({
       ...formData,
-      id: crypto.randomUUID(),
+      id: initialAd?.id || crypto.randomUUID(),
       price: parseFloat(formData.price),
-      created_at: new Date().toISOString(),
-      isFavorite: false
+      created_at: initialAd?.created_at || new Date().toISOString(),
+      isFavorite: initialAd?.isFavorite || false
     });
+
+    if (initialAd) {
+      onBack();
+      return;
+    }
     
     // Reset form
     setFormData({
@@ -153,7 +159,7 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack }) 
                 Voltar ao Painel
               </button>
               <div className="h-6 w-px bg-white/10"></div>
-              <h1 className="text-xl font-bold text-white">Cadastrar Novo Produto</h1>
+              <h1 className="text-xl font-bold text-white">{initialAd ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h1>
             </div>
           </div>
         </div>

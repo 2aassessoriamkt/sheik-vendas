@@ -9,6 +9,7 @@ interface AdminDashboardProps {
   onLogout: () => void;
   onSave: (ad: Ad) => void;
   onNavigateToCadastro: () => void;
+  onEdit: (ad: Ad) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -17,6 +18,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
   onSave,
   onNavigateToCadastro,
+  onEdit,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -104,7 +106,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="text-sm text-gray-500">{ads.filter((ad) => ad.featured).length} destacados</div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="md:hidden">
+            {filteredAds.map((ad) => (
+              <div key={ad.id} className="p-4 border-b border-white/5">
+                <div className="flex items-start gap-3">
+                  <img src={ad.images[0]} className="w-14 h-14 rounded-xl object-cover" alt="" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="font-bold text-white text-sm block truncate">{ad.title}</span>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className="text-[#FF033E] font-bold text-sm">R$ {ad.price.toLocaleString('pt-BR')}</span>
+                          <span className="bg-white/5 px-2 py-1 rounded text-[10px] text-gray-400 font-bold uppercase">
+                            {ad.category}
+                          </span>
+                          {ad.featured && (
+                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded-full font-bold">
+                              Destaque
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500 truncate">{ad.location}</div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => onEdit(ad)}
+                          className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"
+                          aria-label="Editar"
+                        >
+                          <Edit3 size={18} />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Excluir este anúncio permanentemente?')) onDelete(ad.id);
+                          }}
+                          className="p-2 bg-red-500/10 text-red-400 rounded-lg"
+                          aria-label="Remover"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filteredAds.length === 0 && (
+              <div className="p-10 text-center text-gray-500">
+                {searchQuery
+                  ? 'Nenhum produto encontrado para esta busca.'
+                  : 'Nenhum produto no catálogo. Adicione seu primeiro produto!'}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-xs font-bold uppercase tracking-widest">
@@ -145,7 +206,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-2 hover:bg-blue-500/10 hover:text-blue-500 text-gray-500 rounded-lg transition-colors">
+                        <button
+                          onClick={() => onEdit(ad)}
+                          className="p-2 hover:bg-blue-500/10 hover:text-blue-500 text-gray-500 rounded-lg transition-colors"
+                        >
                           <Edit3 size={18} />
                         </button>
 
