@@ -125,23 +125,7 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack, in
       isFavorite: initialAd?.isFavorite || false
     });
 
-    if (initialAd) {
-      onBack();
-      return;
-    }
-    
-    // Reset form
-    setFormData({
-      title: '',
-      price: '',
-      category: CATEGORIES[1],
-      location: '',
-      whatsapp: '',
-      description: '',
-      images: [],
-      videos: [],
-      featured: false
-    });
+    onBack();
   };
 
   return (

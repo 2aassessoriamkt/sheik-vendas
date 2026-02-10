@@ -20,7 +20,7 @@ export const MOCK_ADS: Ad[] = [
     id: '1',
     title: 'Opala Comodoro 1979',
     price: 89000,
-    location: 'São Paulo, SP',
+    location: 'Sinop - MT',
     category: 'Veículos',
     images: [
       opala1,
@@ -37,7 +37,7 @@ export const MOCK_ADS: Ad[] = [
     id: '2',
     title: 'Alfa Romeo 156 Twin Spark 1999',
     price: 115000,
-    location: 'Curitiba, PR',
+    location: 'Sinop - MT',
     category: 'Veículos',
     images: [
       alfa1,
