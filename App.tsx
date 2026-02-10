@@ -125,7 +125,9 @@ export default function App() {
   };
 
   const handleAdminLogin = (pass: string) => {
-    if (pass === 'admin123') {
+    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+
+    if (pass === adminPassword) {
       setView('admin-dashboard');
       setAdminError('');
     } else {

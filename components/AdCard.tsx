@@ -16,6 +16,9 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
     currency: 'BRL',
   }).format(ad.price);
 
+  const whatsappDigits = '9185515016';
+  const whatsappMessage = `Olá! Tenho interesse no produto: ${ad.title}\nPreço: ${formattedPrice}\nLocal: ${ad.location}`;
+
   // Combinar imagens e vídeos para exibição
   const allMedia = [
     ...ad.images.map(img => ({ type: 'image', url: img })),
@@ -146,7 +149,7 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
 
         <div className="mt-auto pt-4 border-t border-white/5">
           <a
-            href={`https://wa.me/55${ad.whatsapp}?text=Olá,%20tenho%20interesse%20no%20anúncio:%20${encodeURIComponent(ad.title)}`}
+            href={`https://wa.me/55${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-[#25D366]/10"
