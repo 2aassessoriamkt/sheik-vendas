@@ -7,6 +7,7 @@ import { AdModal } from './components/AdModal';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminCadastro } from './components/AdminCadastro';
+import { Footer } from './components/Footer';
 import { MOCK_ADS } from './constants';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { Ad, ViewState } from './types';
@@ -203,7 +204,7 @@ export default function App() {
         onOpenAdmin={() => setView('admin-login')}
       />
 
-      <main className="pt-24 pb-24">
+      <main className="pt-24 pb-12">
         {/* Categories */}
         <CategoryBar activeCategory={activeCategory} onSelect={setActiveCategory} />
 
@@ -247,6 +248,8 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveAd}
       />
+
+      <Footer />
     </div>
   );
 }
