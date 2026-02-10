@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Menu, Search } from 'lucide-react';
-import sheikLogo from '../sheik logo.jpeg';
+import sheikLogo from '../midia/Design sem nome (25).png';
 
 interface HeaderProps {
   onOpenAdmin: () => void;
@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onSearchChange }) =
         <img
           src={sheikLogo}
           alt="Logo Sheik Vendas"
-          className="h-10 w-auto object-contain"
+          className="h-8 md:h-10 w-auto object-contain"
         />
 
         {/* Busca */}
