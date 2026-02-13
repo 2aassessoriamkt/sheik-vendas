@@ -12,6 +12,48 @@ import { MOCK_ADS } from './constants';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { Ad, ViewState } from './types';
 
+const isDataUrl = (val: string) => typeof val === 'string' && val.startsWith('data:');
+
+const uploadDataUrlToStorage = async (dataUrl: string, pathPrefix: string) => {
+  if (!supabase) throw new Error('Supabase não configurado');
+
+  const blob = await fetch(dataUrl).then((r) => r.blob());
+  const ext = blob.type.split('/')[1] || 'bin';
+  const path = `${pathPrefix}/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('ads-media')
+    .upload(path, blob, { contentType: blob.type, upsert: true });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from('ads-media').getPublicUrl(path);
+  if (!data?.publicUrl) throw new Error('Não foi possível obter a URL pública do arquivo');
+  return data.publicUrl;
+};
+
+const uploadAdMediaIfNeeded = async (ad: Ad) => {
+  const uploadedImages = await Promise.all(
+    (ad.images || []).map(async (img) => {
+      if (!isDataUrl(img)) return img;
+      return uploadDataUrlToStorage(img, `ads/${ad.id}/images`);
+    })
+  );
+
+  const uploadedVideos = await Promise.all(
+    (ad.videos || []).map(async (vid) => {
+      if (!isDataUrl(vid)) return vid;
+      return uploadDataUrlToStorage(vid, `ads/${ad.id}/videos`);
+    })
+  );
+
+  return {
+    ...ad,
+    images: uploadedImages,
+    videos: uploadedVideos,
+  } as Ad;
+};
+
 export default function App() {
   const [ads, setAds] = useState<Ad[]>(() => {
     const saved = localStorage.getItem('sheik_vendas_ads');
@@ -90,7 +132,7 @@ export default function App() {
     );
   };
 
-  const handleSaveAd = (newAd: Ad) => {
+  const handleSaveAd = async (newAd: Ad): Promise<void> => {
     const upsertLocal = (ad: Ad) => {
       setAds((prev) => {
         const exists = prev.some((p) => p.id === ad.id);
@@ -105,22 +147,22 @@ export default function App() {
       return;
     }
 
-    void (async () => {
-      const { data, error } = await supabase
-        .from('ads')
-        .upsert(newAd, { onConflict: 'id' })
-        .select('*')
-        .single();
+    let adToSave = newAd;
+    adToSave = await uploadAdMediaIfNeeded(newAd);
 
-      if (error) {
-        console.error('Supabase upsert error:', error);
-        alert('Erro ao salvar no banco. Tente novamente.');
-        return;
-      }
+    const { data, error } = await supabase
+      .from('ads')
+      .upsert(adToSave, { onConflict: 'id' })
+      .select('*')
+      .single();
 
-      upsertLocal(data as Ad);
-      setAdBeingEdited(null);
-    })();
+    if (error) {
+      console.error('Supabase upsert error:', error);
+      throw error;
+    }
+
+    upsertLocal(data as Ad);
+    setAdBeingEdited(null);
   };
 
   const handleDeleteAd = (id: string) => {

@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Save, Upload, Image as ImageIcon, Video, Trash2, Sparkles, DollarSign, X, Check } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Image as ImageIcon, Video, Trash2, DollarSign, X } from 'lucide-react';
 import { CATEGORIES } from '../constants';
-import { enhanceAdDescription, suggestPrice } from '../geminiService';
 import { Ad } from '../types';
 
 interface AdminCadastroProps {
-  onSave: (ad: Ad) => void;
+  onSave: (ad: Ad) => Promise<void>;
   onBack: () => void;
   initialAd?: Ad;
 }
@@ -83,49 +82,30 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack, in
     }));
   };
 
-  const handleAIPrice = async () => {
-    if (!formData.title) return alert("Digite um título primeiro!");
-    setLoading(true);
-    try {
-      const suggested = await suggestPrice(formData.title, formData.category);
-      setFormData(prev => ({ ...prev, price: suggested.toString() }));
-    } catch (error) {
-      alert('Erro ao sugerir preço. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAIDescription = async () => {
-    if (!formData.title) return alert("Digite um título primeiro!");
-    setLoading(true);
-    try {
-      const enhanced = await enhanceAdDescription(formData.title, formData.description);
-      setFormData(prev => ({ ...prev, description: enhanced }));
-    } catch (error) {
-      alert('Erro ao melhorar descrição. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.images.length === 0) {
       alert('Adicione pelo menos uma imagem!');
       return;
     }
-    
-    onSave({
-      ...formData,
-      id: initialAd?.id || crypto.randomUUID(),
-      price: parseFloat(formData.price),
-      created_at: initialAd?.created_at || new Date().toISOString(),
-      isFavorite: initialAd?.isFavorite || false
-    });
 
-    onBack();
+    setLoading(true);
+    try {
+      await onSave({
+        ...formData,
+        id: initialAd?.id || crypto.randomUUID(),
+        price: parseFloat(formData.price),
+        created_at: initialAd?.created_at || new Date().toISOString(),
+        isFavorite: initialAd?.isFavorite || false
+      });
+      onBack();
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao salvar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -197,14 +177,6 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack, in
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-gray-300">Preço (R$) *</label>
-                  <button 
-                    type="button"
-                    onClick={handleAIPrice}
-                    disabled={loading}
-                    className="text-xs font-medium text-[#FF033E] flex items-center gap-1 hover:underline disabled:opacity-50"
-                  >
-                    <Sparkles size={12} /> Sugestão IA
-                  </button>
                 </div>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -330,14 +302,6 @@ export const AdminCadastro: React.FC<AdminCadastroProps> = ({ onSave, onBack, in
                 <div className="w-2 h-2 bg-[#FF033E] rounded-full"></div>
                 Descrição Detalhada
               </h2>
-              <button 
-                type="button"
-                onClick={handleAIDescription}
-                disabled={loading}
-                className="text-xs font-medium text-[#FF033E] flex items-center gap-1 hover:underline disabled:opacity-50"
-              >
-                <Sparkles size={12} /> Melhorar com IA
-              </button>
             </div>
             <textarea 
               rows={6}

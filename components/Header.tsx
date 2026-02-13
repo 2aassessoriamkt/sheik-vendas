@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onSearchChange }) =
         <img
           src={sheikLogo}
           alt="Logo Sheik Vendas"
-          className="h-8 md:h-10 w-auto object-contain"
+          className="h-12 md:h-10 w-auto object-contain"
         />
 
         {/* Busca */}

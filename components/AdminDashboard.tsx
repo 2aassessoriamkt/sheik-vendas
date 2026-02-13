@@ -7,7 +7,7 @@ interface AdminDashboardProps {
   ads: Ad[];
   onDelete: (id: string) => void;
   onLogout: () => void;
-  onSave: (ad: Ad) => void;
+  onSave: (ad: Ad) => Promise<void>;
   onNavigateToCadastro: () => void;
   onEdit: (ad: Ad) => void;
 }

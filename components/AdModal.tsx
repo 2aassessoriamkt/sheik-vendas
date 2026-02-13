@@ -1,13 +1,12 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Sparkles, DollarSign, Camera, Check, Upload, Image as ImageIcon, Video, Trash2 } from 'lucide-react';
+import { X, DollarSign, Camera, Check, Upload, Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '../constants';
-import { enhanceAdDescription, suggestPrice } from '../geminiService';
 
 interface AdModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (ad: any) => void;
+  onSave: (ad: any) => Promise<void>;
 }
 
 export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => {
@@ -29,28 +28,12 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => 
 
   if (!isOpen) return null;
 
-  const handleAIPrice = async () => {
-    if (!formData.title) return alert("Digite um título primeiro!");
-    setLoading(true);
-    const suggested = await suggestPrice(formData.title, formData.category);
-    setFormData(prev => ({ ...prev, price: suggested.toString() }));
-    setLoading(false);
-  };
-
-  const handleAIDescription = async () => {
-    if (!formData.title) return alert("Digite um título primeiro!");
-    setLoading(true);
-    const enhanced = await enhanceAdDescription(formData.title, formData.description);
-    setFormData(prev => ({ ...prev, description: enhanced }));
-    setLoading(false);
-  };
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     
     const newImages: string[] = [];
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach((file: File) => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -71,7 +54,7 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => 
     if (!files) return;
     
     const newVideos: string[] = [];
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach((file: File) => {
       if (file.type.startsWith('video/')) {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -101,16 +84,25 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => 
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      id: Math.random().toString(36).substr(2, 9),
-      price: parseFloat(formData.price),
-      created_at: new Date().toISOString(),
-      isFavorite: false
-    });
-    onClose();
+
+    setLoading(true);
+    try {
+      await onSave({
+        ...formData,
+        id: crypto.randomUUID(),
+        price: parseFloat(formData.price),
+        created_at: new Date().toISOString(),
+        isFavorite: false
+      });
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao salvar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -155,13 +147,6 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => 
             <div className="space-y-1">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Preço (R$)</label>
-                <button 
-                  type="button"
-                  onClick={handleAIPrice}
-                  className="text-[10px] font-bold text-[#FF033E] flex items-center gap-1 hover:underline"
-                >
-                  <Sparkles size={10} /> Sugestão IA
-                </button>
               </div>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -278,13 +263,6 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onSave }) => 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição Detalhada</label>
-              <button 
-                type="button"
-                onClick={handleAIDescription}
-                className="text-[10px] font-bold text-[#FF033E] flex items-center gap-1 hover:underline"
-              >
-                <Sparkles size={10} /> Melhorar com IA
-              </button>
             </div>
             <textarea 
               rows={6}

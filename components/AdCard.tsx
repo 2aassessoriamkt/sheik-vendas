@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Heart, MapPin, Clock, MessageCircle, ChevronLeft, ChevronRight, Video as VideoIcon, Image as ImageIcon } from 'lucide-react';
 import { Ad } from '../types';
 
@@ -10,6 +10,7 @@ interface AdCardProps {
 
 export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const galleryRef = useRef<HTMLDivElement | null>(null);
   
   const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -33,6 +34,23 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
     setCurrentMediaIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
   };
 
+  useEffect(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const width = el.clientWidth;
+    if (!width) return;
+    el.scrollTo({ left: currentMediaIndex * width, behavior: 'smooth' });
+  }, [currentMediaIndex]);
+
+  const handleGalleryScroll = () => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const width = el.clientWidth;
+    if (!width) return;
+    const index = Math.round(el.scrollLeft / width);
+    if (index !== currentMediaIndex) setCurrentMediaIndex(index);
+  };
+
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
     let interval = seconds / 31536000;
@@ -51,34 +69,46 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
   return (
     <div className="group bg-[#121212] border border-white/5 rounded-2xl overflow-hidden hover:border-[#FF033E]/50 transition-all duration-300 shadow-xl flex flex-col h-full">
       <div className="relative aspect-[4/3] overflow-hidden">
-        {allMedia[currentMediaIndex]?.type === 'image' ? (
-          <img 
-            src={allMedia[currentMediaIndex].url} 
-            alt={ad.title} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-        ) : (
-          <video 
-            src={allMedia[currentMediaIndex]?.url} 
-            className="w-full h-full object-cover"
-            muted
-            loop
-            playsInline
-          />
-        )}
+        <div
+          ref={galleryRef}
+          onScroll={handleGalleryScroll}
+          className="flex h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {allMedia.map((media, idx) => (
+            <div key={idx} className="h-full w-full flex-none snap-start">
+              {media.type === 'image' ? (
+                <img
+                  src={media.url}
+                  alt={ad.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  draggable={false}
+                />
+              ) : (
+                <video
+                  src={media.url}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  playsInline
+                />
+              )}
+            </div>
+          ))}
+        </div>
         
         {/* Controles da galeria */}
         {allMedia.length > 1 && (
           <>
             <button 
               onClick={prevMedia}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
+              className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={nextMedia}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
+              className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
             >
               <ChevronRight size={16} />
             </button>
