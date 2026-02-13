@@ -100,6 +100,20 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onToggleFavorite }) => {
         {/* Controles da galeria */}
         {allMedia.length > 1 && (
           <>
+            {/* Áreas de toque no mobile (tap para navegar) */}
+            <button
+              type="button"
+              onClick={prevMedia}
+              className="md:hidden absolute left-0 top-0 h-full w-1/3 bg-transparent"
+              aria-label="Imagem anterior"
+            />
+            <button
+              type="button"
+              onClick={nextMedia}
+              className="md:hidden absolute right-0 top-0 h-full w-1/3 bg-transparent"
+              aria-label="Próxima imagem"
+            />
+
             <button 
               onClick={prevMedia}
               className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-black/70 transition-colors"
